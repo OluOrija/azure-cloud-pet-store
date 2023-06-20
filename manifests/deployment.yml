@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: projectshadowazurecloudpetstore 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: projectshadowazurecloudpetstore
+  template:
+    metadata:
+      labels:
+        app: projectshadowazurecloudpetstore 
+    spec:
+      containers:
+        - name: projectshadowazurecloudpetstore 
+          image: projectpetstore.azurecr.io/projectshadowazurecloudpetstore
+          ports:
+          - containerPort: 80
