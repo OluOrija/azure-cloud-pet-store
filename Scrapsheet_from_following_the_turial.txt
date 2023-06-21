@@ -1,0 +1,107 @@
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e87c71d71261
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 9ed6104ef1c1
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' 24396266b120
+
+172.19.0.2
+172.19.0.3
+172.19.0.4
+
+
+docker run --rm --net petstorebridge --name petstoreapp -p 8080:8080 -e PETSTOREAPP_SERVER_PORT=8080 -e PETSTOREPETSERVICE_URL=http://172.19.0.2:8081 -e PETSTOREPRODUCTSERVICE_URL=http://172.19.0.3:8082 -e PETSTOREORDERSERVICE_URL=http://172.19.0.4:8083 -d petstoreapp:lates
+
+
+az acr update -n projectpetstore -g projectpetstore --admin-enabled true
+
+docker image tag petstoreapp:latest projectpetstore.azurecr.io/petstoreapp:latest
+
+docker push projectpetstore.azurecr.io/petstoreapp:latest
+
+
+
+docker image tag petstorepetservice:latest projectpetstore.azurecr.io/petstorepetservice:latest
+
+docker push projectpetstore.azurecr.io/petstorepetservice:latest
+
+
+docker image tag petstoreproductservice:latest projectpetstore.azurecr.io/petstoreproductservice:latest
+
+docker push projectpetstore.azurecr.io/petstoreproductservice:latest
+
+
+docker image tag petstoreorderservice:latest projectpetstore.azurecr.io/petstoreorderservice:latest
+
+docker push projectpetstore.azurecr.io/petstoreorderservice:latest
+
+
+
+
+az aks create --resource-group=projectpetstore --name=projectshadowazurepetstore-akscluster --attach-acr projectpetstore --dns-name-prefix=projectshadowazurepetstoreserviceaks --generate-ssh-keys
+
+az aks get-credentials --resource-group=projectpetstore --name=projectshadowazurepetstore-akscluster
+
+az aks get-credentials --resource-group=projectpetstore --name=projectshadowazurepetstore-akscluster
+
+helm install ingress-nginx ingress-nginx/ingress-nginx --create-namespace --namespace $NAMESPACE --set controller.service.annotations."service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path"=/health
+
+
+
+NAMESPACE=ingress-basic
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+$Namespace = 'ingress-petstoreservices'
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install ingress-nginx ingress-nginx/ingress-nginx `
+  --create-namespace `
+  --namespace $Namespace `
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+  
+$RESOURCE_GROUP = 'projectpetstore'
+$ACR_URL = 'projectpetstore.azurecr.io'
+$REGISTRY_NAME = 'projectpetstore'
+$SOURCE_REGISTRY = 'k8s.gcr.io'
+$CONTROLLER_IMAGE = 'ingress-nginx/controller'
+$CONTROLLER_TAG = 'v1.0.4'
+$PATCH_IMAGE = 'ingress-nginx/kube-webhook-certgen'
+$PATCH_TAG = 'v1.1.1'
+$DEFAULTBACKEND_IMAGE = 'defaultbackend-amd64'
+$DEFAULTBACKEND_TAG = '1.5'  
+  
+  
+  
+az acr import --resource-group=${RESOURCE_GROUP} --name ${REGISTRY_NAME} --source ${SOURCE_REGISTRY}/${CONTROLLER_IMAGE}:${CONTROLLER_TAG} --image ${CONTROLLER_IMAGE}:${CONTROLLER_TAG}
+
+az acr import --resource-group=${RESOURCE_GROUP} --name ${REGISTRY_NAME} --source ${SOURCE_REGISTRY}/${PATCH_IMAGE}:${PATCH_TAG} --image ${PATCH_IMAGE}:${PATCH_TAG}
+
+az acr import --resource-group=${RESOURCE_GROUP} --name ${REGISTRY_NAME} --source ${SOURCE_REGISTRY}/${DEFAULTBACKEND_IMAGE}:${DEFAULTBACKEND_TAG} --image ${DEFAULTBACKEND_IMAGE}:${DEFAULTBACKEND_TAG}
+
+
+
+helm install ingress-nginx ingress-nginx/ingress-nginx `
+--namespace $NAMESPACE --create-namespace `
+--set controller.replicaCount=2 `
+--set controller.nodeSelector."kubernetes\.io/os"=linux `
+--set controller.image.registry=$ACR_URL `
+--set controller.image.image=$CONTROLLER_IMAGE `
+--set controller.image.tag=$CONTROLLER_TAG `
+--set controller.image.digest="" `
+--set controller.admissionWebhooks.patch.nodeSelector."kubernetes\.io/os"=linux `
+--set controller.admissionWebhooks.patch.image.registry=$ACR_URL `
+--set controller.admissionWebhooks.patch.image.image=$PATCH_IMAGE `
+--set controller.admissionWebhooks.patch.image.tag=$PATCH_TAG `
+--set controller.admissionWebhooks.patch.image.digest="" `
+--set defaultBackend.nodeSelector."kubernetes\.io/os"=linux `
+--set defaultBackend.image.registry=$ACR_URL `
+--set defaultBackend.image.image=$DEFAULTBACKEND_IMAGE `
+--set defaultBackend.image.tag=$DEFAULTBACKEND_TAG `
+--set defaultBackend.image.digest=""
+
+
+--resource-group projectpetstore ` 
+--cluster-name projectshadowazurepetstore-akscluster ` 
+--name petstorenp2 ` 
+--node-count 3
