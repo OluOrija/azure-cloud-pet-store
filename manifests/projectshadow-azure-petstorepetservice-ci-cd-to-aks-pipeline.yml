@@ -16,7 +16,7 @@ resources:
 variables:
 
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '52b95932-e6aa-4f8e-a6ee-2a69fd052909'
+  dockerRegistryServiceConnection: 'projectpetstore'
   imageRepository: 'petstorepetservice'
   containerRegistry: 'azurepetstorecontainerregistry.azurecr.io'
   dockerfilePath: 'petstore/petstorepetservice/Dockerfile'
@@ -50,7 +50,7 @@ stages:
         mavenPomFile: 'petstore/petstorepetservice/pom.xml'
         mavenOptions: '-Xmx3072m'
         javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '8'
+        jdkVersionOption: '1.8'
         jdkArchitectureOption: 'x64'
         publishJUnitResults: true
         testResultsFiles: 'petstore/petstorepetservice/target/surefire-reports/TEST-*.xml'
